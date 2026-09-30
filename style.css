@@ -266,6 +266,53 @@ input[aria-invalid="true"] {
   font-size: 0.875rem;
 }
 
+/* ---------- Cards below the figures ---------- */
+
+.card {
+  margin-top: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px 24px;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--navy);
+}
+
+.card-sub {
+  margin: 4px 0 16px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* ---------- The running-total chart ---------- */
+
+.chart { width: 100%; min-height: 240px; }
+.chart svg { display: block; overflow: visible; }
+
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .zero { stroke: #7D8894; stroke-width: 1.25; }
+.chart .tick-label { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.chart .area-up { fill: var(--green-soft); }
+.chart .area-down { fill: var(--red-soft); }
+.chart .line { fill: none; stroke: var(--navy); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart .payback-line { stroke: var(--gold); stroke-width: 2; }
+.chart .payback-dot { fill: var(--gold); stroke: var(--paper); stroke-width: 2; }
+.chart .payback-label { fill: var(--ink); font-size: 13px; font-weight: 600; }
+.chart .payback-label-bg { fill: var(--paper); }
+
+.chart-caption {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-caption strong { color: var(--ink); font-weight: 600; }
+
 /* ---------- Footer ---------- */
 
 .foot {
@@ -308,4 +355,6 @@ input[aria-invalid="true"] {
   .figure { padding: 16px; }
   .figure-value { font-size: 2rem; }
   .figure-value.is-long { font-size: 1.25rem; }
+  .card { padding: 16px; }
+  .chart { min-height: 200px; }
 }

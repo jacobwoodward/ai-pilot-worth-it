@@ -197,6 +197,143 @@
     yearOneEl.classList.add(Math.round(result.yearOne) < 0 ? "is-negative" : "is-positive");
   }
 
+  // ---------- Drawing the running total ----------
+
+  const chartEl = document.getElementById("chart");
+  const captionEl = document.getElementById("chart-caption");
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let lastChart = null; // remembered so the chart can be redrawn when the window is resized
+
+  function svg(tag, attrs, parent) {
+    const el = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+    if (parent) parent.appendChild(el);
+    return el;
+  }
+
+  // $50k, −$20k, $1.2m — short labels for the side of the chart.
+  function shortMoney(n) {
+    const abs = Math.abs(n);
+    let text;
+    if (abs >= 1e6) text = "$" + upToTwoPlaces.format(abs / 1e6) + "m";
+    else if (abs >= 1e3) text = "$" + upToTwoPlaces.format(abs / 1e3) + "k";
+    else text = "$" + wholeNumber.format(abs);
+    return n < 0 ? "−" + text : text;
+  }
+
+  // Round, even steps for the gridlines (1, 2, 2.5 or 5 times a power of ten).
+  function niceStep(range, count) {
+    const rough = range / count;
+    const power = Math.pow(10, Math.floor(Math.log10(rough)));
+    const steps = [1, 2, 2.5, 5, 10];
+    for (let i = 0; i < steps.length; i++) {
+      if (steps[i] * power >= rough) return steps[i] * power;
+    }
+    return 10 * power;
+  }
+
+  function drawChart(result, setup) {
+    lastChart = result ? { result: result, setup: setup } : null;
+    chartEl.replaceChildren();
+
+    if (!result) {
+      captionEl.textContent = "";
+      return;
+    }
+
+    // Month 0 is launch day: only the setup cost has been spent.
+    const points = [-setup].concat(result.running);
+    const months = points.length - 1;
+
+    const width = Math.max(280, chartEl.clientWidth);
+    const height = width < 480 ? 220 : 280;
+    const pad = { top: 28, right: 16, bottom: 30, left: 56 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+
+    // The vertical scale always includes $0 so the zero line is on the chart.
+    let lo = Math.min(0, Math.min.apply(null, points));
+    let hi = Math.max(0, Math.max.apply(null, points));
+    if (hi - lo < 1) hi = lo + 1000;
+    const step = niceStep(hi - lo, width < 480 ? 4 : 6);
+    lo = Math.floor(lo / step) * step;
+    hi = Math.ceil(hi / step) * step;
+
+    const x = function (month) { return pad.left + (month / months) * plotW; };
+    const y = function (value) { return pad.top + ((hi - value) / (hi - lo)) * plotH; };
+
+    const root = svg("svg", {
+      width: width, height: height, viewBox: "0 0 " + width + " " + height,
+      role: "img",
+      "aria-label": "Running total over 36 months, from " + money(points[0]) +
+        " at launch to " + money(points[months]) + " after three years. " +
+        (result.payback === null ? "It does not reach zero within three years."
+                                 : "It reaches zero in month " + result.payback + ".")
+    }, chartEl);
+
+    // Gridlines and money labels.
+    for (let v = lo; v <= hi + step / 2; v += step) {
+      const isZero = Math.abs(v) < step / 1000;
+      svg("line", { x1: pad.left, x2: width - pad.right, y1: y(v), y2: y(v), class: isZero ? "zero" : "grid" }, root);
+      const label = svg("text", { x: pad.left - 8, y: y(v) + 4, "text-anchor": "end", class: "tick-label" }, root);
+      label.textContent = isZero ? "$0" : shortMoney(v);
+    }
+
+    // Time labels along the bottom.
+    [[0, "Launch"], [12, "Year 1"], [24, "Year 2"], [36, "Year 3"]].forEach(function (t) {
+      const anchor = t[0] === 0 ? "start" : t[0] === months ? "end" : "middle";
+      const label = svg("text", { x: x(t[0]), y: height - 8, "text-anchor": anchor, class: "tick-label" }, root);
+      label.textContent = t[1];
+    });
+
+    // Shading between the line and $0: green above, red below.
+    const zeroY = y(0);
+    const line = points.map(function (v, m) { return (m ? "L" : "M") + x(m).toFixed(1) + " " + y(v).toFixed(1); }).join(" ");
+    const area = line + " L" + x(months).toFixed(1) + " " + zeroY + " L" + x(0).toFixed(1) + " " + zeroY + " Z";
+    const defs = svg("defs", {}, root);
+    const clipUp = svg("clipPath", { id: "clip-up" }, defs);
+    svg("rect", { x: 0, y: 0, width: width, height: zeroY }, clipUp);
+    const clipDown = svg("clipPath", { id: "clip-down" }, defs);
+    svg("rect", { x: 0, y: zeroY, width: width, height: height - zeroY }, clipDown);
+    svg("path", { d: area, class: "area-up", "clip-path": "url(#clip-up)" }, root);
+    svg("path", { d: area, class: "area-down", "clip-path": "url(#clip-down)" }, root);
+
+    // Redraw the zero line on top of the shading, then the running total itself.
+    svg("line", { x1: pad.left, x2: width - pad.right, y1: zeroY, y2: zeroY, class: "zero" }, root);
+    svg("path", { d: line, class: "line" }, root);
+
+    // The payback month, in gold.
+    if (result.payback !== null) {
+      const px = x(result.payback);
+      svg("line", { x1: px, x2: px, y1: pad.top - 6, y2: pad.top + plotH, class: "payback-line" }, root);
+      svg("circle", { cx: px, cy: y(points[result.payback]), r: 5.5, class: "payback-dot" }, root);
+
+      const text = "Payback, month " + result.payback;
+      const onRight = px < pad.left + plotW * 0.7;
+      const label = svg("text", {
+        x: onRight ? px + 8 : px - 8, y: pad.top - 12,
+        "text-anchor": onRight ? "start" : "end", class: "payback-label"
+      }, root);
+      label.textContent = text;
+    }
+
+    // One line under the chart with the three-year figure.
+    captionEl.replaceChildren();
+    captionEl.append("After three years the running total is ");
+    const strong = document.createElement("strong");
+    strong.textContent = money(points[months]);
+    captionEl.append(strong, ".");
+  }
+
+  if (typeof ResizeObserver === "function") {
+    let lastWidth = 0;
+    new ResizeObserver(function () {
+      const w = chartEl.clientWidth;
+      if (lastChart && Math.abs(w - lastWidth) > 1) drawChart(lastChart.result, lastChart.setup);
+      lastWidth = w;
+    }).observe(chartEl);
+  }
+
   // ---------- Recalculate on every keystroke ----------
 
   function update() {
@@ -205,11 +342,13 @@
 
     if (read.blocking.length) {
       showFigures(null);
+      drawChart(null);
       return;
     }
 
     const result = Model.run(read.best, read.ramp);
     showFigures(result);
+    drawChart(result, read.best.setup);
   }
 
   fillWithExample();
