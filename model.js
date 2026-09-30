@@ -144,6 +144,111 @@
     return ranges;
   }
 
+  /*
+    Sentences
+
+    These turn the ranking into plain words. Every number in them comes
+    from the sums above; nothing is typed in by hand.
+  */
+
+  const wholeNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  const upToTwoPlaces = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+
+  // $64,907, or −$1,453 with a real minus sign.
+  function money(n) {
+    const rounded = Math.round(n);
+    const text = "$" + wholeNumber.format(Math.abs(rounded));
+    return rounded < 0 ? "−" + text : text;
+  }
+
+  // A guess, shown the way it was typed: 3, $55, 60%, $15,000.
+  function guessText(input, value) {
+    if (input.kind === "money") return "$" + upToTwoPlaces.format(value);
+    if (input.kind === "percent") return upToTwoPlaces.format(value) + "%";
+    return upToTwoPlaces.format(value);
+  }
+
+  function monthText(payback) {
+    return payback === null ? "beyond three years" : "month " + payback;
+  }
+
+  function capitalise(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  /*
+    checkFirst(rows, best)
+
+    The sentence about the guess at the top of the ranking. It says what
+    happens if that guess turns out at its worse end (for most guesses,
+    the low one; for the costs, the high one).
+
+    Hands back three pieces so the page can put the name in bold:
+      { before: "The number to check first is ",
+        name:   "hours saved per person per week",
+        after:  ". At 1 instead of 3, payback moves from month 4 to month 11." }
+    or null if no guess moves the answer at all.
+  */
+  function checkFirst(rows, best) {
+    if (!rows.length || rows[0].swing < 0.5) return null;
+
+    const top = rows[0];
+    const lowIsWorse = top.atLow.yearOne <= top.atHigh.yearOne;
+    const worseValue = lowIsWorse ? top.low : top.high;
+    const worse = lowIsWorse ? top.atLow : top.atHigh;
+    const at = "At " + guessText(top.input, worseValue) +
+               " instead of " + guessText(top.input, best.guesses[top.input.key]) + ", ";
+
+    // Usually the worse end lowers the net; if the best guess sits outside its range it can raise it.
+    const netChange = (worse.yearOne < best.yearOne ? "falls" : "rises") +
+      " from " + money(best.yearOne) + " to " + money(worse.yearOne);
+
+    let after;
+    if (best.payback !== null && worse.payback === null) {
+      after = at + "the pilot no longer pays for itself within three years.";
+    } else if (best.payback !== null && worse.payback !== best.payback) {
+      after = at + "payback moves from month " + best.payback + " to month " + worse.payback + ".";
+    } else if (best.payback !== null) {
+      after = at + "payback stays in month " + best.payback +
+              " but the year-one net " + netChange + ".";
+    } else {
+      after = at + "the year-one net " + netChange + ".";
+    }
+
+    return { before: "The number to check first is ", name: top.input.phrase, after: ". " + after };
+  }
+
+  /*
+    mattersLeast(rows, best)
+
+    The sentence about the guess at the bottom of the ranking, e.g.
+      "Licence price barely matters: anywhere from $20 to $60, payback stays in month 4."
+    Returns null when there are fewer than two guesses to compare.
+  */
+  function mattersLeast(rows, best) {
+    if (rows.length < 2) return null;
+
+    const last = rows[rows.length - 1];
+    const name = capitalise(last.input.phrase);
+    const span = "anywhere from " + guessText(last.input, last.low) + " to " + guessText(last.input, last.high) + ", ";
+    const months = [last.atLow.payback, best.payback, last.atHigh.payback];
+    const allSame = months.every(function (m) { return m === months[0]; });
+
+    if (allSame && months[0] !== null) {
+      return name + " barely matters: " + span + "payback stays in month " + months[0] + ".";
+    }
+    if (allSame) {
+      return name + " matters least: " + span + "the pilot still does not pay for itself within three years.";
+    }
+
+    // Payback does move a little: say between which months.
+    const known = months.filter(function (m) { return m !== null; });
+    const earliest = Math.min.apply(null, known);
+    const latest = months.indexOf(null) >= 0 ? null : Math.max.apply(null, known);
+    return name + " matters least: " + span + "payback moves only between month " + earliest +
+           " and " + monthText(latest) + ".";
+  }
+
   const Model = {
     WEEKS_PER_MONTH: WEEKS_PER_MONTH,
     MONTHS: MONTHS,
@@ -152,7 +257,11 @@
     bestGuesses: bestGuesses,
     exampleRanges: exampleRanges,
     run: run,
-    rank: rank
+    rank: rank,
+    checkFirst: checkFirst,
+    mattersLeast: mattersLeast,
+    money: money,
+    guessText: guessText
   };
 
   // Works both in the browser (as window.Model) and in the test script.

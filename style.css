@@ -284,6 +284,7 @@ input[aria-invalid="true"] {
 
 .card-sub {
   margin: 4px 0 16px;
+  max-width: 62ch;
   color: var(--muted);
   font-size: 0.9375rem;
 }
@@ -306,12 +307,40 @@ input[aria-invalid="true"] {
 
 .chart-caption {
   margin: 12px 0 0;
+  text-wrap: balance;
   color: var(--muted);
   font-size: 0.9375rem;
   font-variant-numeric: tabular-nums;
 }
 
 .chart-caption strong { color: var(--ink); font-weight: 600; }
+
+/* ---------- The number to check first ---------- */
+
+.verdict {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border-left: 3px solid var(--navy);
+  background: var(--navy-soft);
+  border-radius: 0 6px 6px 0;
+}
+
+.verdict[hidden] { display: none; }
+.verdict p { margin: 0; text-wrap: balance; }
+
+.verdict-first {
+  font-size: 1.125rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.verdict-first strong { color: var(--navy); }
+
+.verdict-least {
+  margin-top: 6px !important;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
 
 /* ---------- Which number matters most (a "tornado" chart) ---------- */
 

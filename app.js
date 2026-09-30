@@ -16,19 +16,10 @@
   const wholeNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
   const upToTwoPlaces = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
-  // $64,907 or −$1,453 (with a real minus sign).
-  function money(n) {
-    const rounded = Math.round(n);
-    const text = "$" + wholeNumber.format(Math.abs(rounded));
-    return rounded < 0 ? "−" + text : text;
-  }
-
-  // A guess, shown the way it was typed: 3, $55, 60%, $15,000.
-  function guessText(input, value) {
-    if (input.kind === "money") return "$" + upToTwoPlaces.format(value);
-    if (input.kind === "percent") return upToTwoPlaces.format(value) + "%";
-    return upToTwoPlaces.format(value);
-  }
+  // $64,907 or −$1,453, and a guess shown the way it was typed (3, $55, 60%).
+  // Both live in model.js so the page and the sentences always agree.
+  const money = Model.money;
+  const guessText = Model.guessText;
 
   function paybackText(month) {
     return month === null ? "Not within 3 years" : "Month " + month;
@@ -445,6 +436,27 @@
     tornadoEl.appendChild(list);
   }
 
+  // ---------- The number to check first, in one sentence ----------
+
+  const verdictEl = document.getElementById("verdict");
+  const firstEl = document.getElementById("check-first");
+  const leastEl = document.getElementById("matters-least");
+
+  function showVerdict(rows, best) {
+    const first = rows ? Model.checkFirst(rows, best) : null;
+    const least = rows ? Model.mattersLeast(rows, best) : null;
+
+    verdictEl.hidden = !rows || !rows.length;
+    firstEl.replaceChildren();
+    if (first) {
+      firstEl.append(first.before, el("strong", "", first.name), first.after);
+    } else if (rows && rows.length) {
+      firstEl.textContent = "None of the ranges move the year-one net, so no single guess stands out.";
+    }
+    leastEl.textContent = least || "";
+    leastEl.hidden = !least;
+  }
+
   // ---------- Recalculate on every keystroke ----------
 
   function update() {
@@ -455,6 +467,7 @@
       showFigures(null);
       drawChart(null);
       drawTornado(null);
+      showVerdict(null);
       return;
     }
 
@@ -464,6 +477,7 @@
 
     const rows = Model.rank(read.best, read.ranges, read.ramp);
     drawTornado(rows, result.yearOne);
+    showVerdict(rows, { guesses: read.best, payback: result.payback, yearOne: result.yearOne });
   }
 
   fillWithExample();

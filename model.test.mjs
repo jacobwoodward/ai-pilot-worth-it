@@ -70,4 +70,31 @@ check("a guess with no range is left out of the ranking", () => {
   assert.equal(Model.rank(best, ranges, RAMP).some((r) => r.input.key === "hours"), false);
 });
 
+console.log("The two sentences");
+const baseline = { guesses: best, ...Model.run(best, RAMP) };
+check("names hours saved first, with what happens at its low guess", () => {
+  const s = Model.checkFirst(rows, baseline);
+  assert.equal(s.before + s.name + s.after,
+    "The number to check first is hours saved per person per week. At 1 instead of 3, payback moves from month 4 to month 11.");
+});
+check("says licence price barely matters", () => {
+  assert.equal(Model.mattersLeast(rows, baseline),
+    "Licence price barely matters: anywhere from $20 to $60, payback stays in month 4.");
+});
+check("says when the worse end never pays back", () => {
+  const ranges = { ...Model.exampleRanges(), hours: { low: 0.2, high: 5 } };
+  const s = Model.checkFirst(Model.rank(best, ranges, RAMP), baseline);
+  assert.equal(s.name + s.after,
+    "hours saved per person per week. At 0.2 instead of 3, the pilot no longer pays for itself within three years.");
+});
+check("zero adoption: the sentences still read", () => {
+  const g = { ...best, adoption: 0 };
+  const b = { guesses: g, ...Model.run(g, RAMP) };
+  const r = Model.rank(g, Model.exampleRanges(), RAMP);
+  const s = Model.checkFirst(r, b);
+  assert.ok(s && !/undefined|NaN|null/.test(s.before + s.name + s.after));
+  const least = Model.mattersLeast(r, b);
+  assert.ok(least && !/undefined|NaN|null/.test(least));
+});
+
 console.log(passed + " checks passed" + (process.exitCode ? ", some failed" : ""));
