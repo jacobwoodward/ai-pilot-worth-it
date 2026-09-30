@@ -9,7 +9,7 @@ A one-page business case for an AI pilot. You type seven guesses — how many pe
 
 Live at **https://jake.golisano.dev**. It runs entirely in your browser; nothing you type is sent anywhere.
 
-The numbers are illustrative — replace them with yours.
+**The numbers are illustrative.** They show how the calculator works, not what any real pilot will return. Replace them with yours before you take the answer to a meeting.
 
 ## What each file does
 
