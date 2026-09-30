@@ -334,6 +334,117 @@
     }).observe(chartEl);
   }
 
+  // ---------- Which number matters most ----------
+
+  const tornadoEl = document.getElementById("tornado");
+  const rankEmptyEl = document.getElementById("rank-empty");
+
+  function el(tag, className, text) {
+    const e = document.createElement(tag);
+    if (className) e.className = className;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // Each bar runs from the worse year-one net to the better one, split at the best guess.
+  function drawTornado(rows, bestNet) {
+    tornadoEl.replaceChildren();
+    rankEmptyEl.hidden = rows !== null;
+    if (!rows) return;
+    if (!rows.length) {
+      tornadoEl.appendChild(el("p", "card-sub", "Give at least one guess a low and a high to see the ranking."));
+      return;
+    }
+
+    // One shared scale for every bar, wide enough for every result and the best guess.
+    let lo = bestNet;
+    let hi = bestNet;
+    rows.forEach(function (r) {
+      lo = Math.min(lo, r.atLow.yearOne, r.atHigh.yearOne);
+      hi = Math.max(hi, r.atLow.yearOne, r.atHigh.yearOne);
+    });
+    const crossesZero = lo < 0 && hi > 0; // only then is a $0 line worth drawing
+    const spare = (hi - lo) * 0.03 || 1000;
+    lo -= spare;
+    hi += spare;
+    const pct = function (v) { return ((v - lo) / (hi - lo)) * 100; };
+    const bestPct = pct(bestNet);
+
+    function track() {
+      const t = el("div", "t-track");
+      if (crossesZero) {
+        const zero = el("div", "t-zero");
+        zero.style.left = pct(0) + "%";
+        t.appendChild(zero);
+      }
+      const line = el("div", "t-best");
+      line.style.left = bestPct + "%";
+      t.appendChild(line);
+      return t;
+    }
+
+    // Header row: what each column means, and where the best guess sits.
+    const head = el("div", "t-row t-head");
+    head.setAttribute("aria-hidden", "true");
+    head.append(el("div", "t-name", ""), el("div", "t-worse", "Lower"));
+    const headTrack = el("div", "t-track");
+    const bestLabel = el("div", "t-best-label", "Best guesses: " + money(bestNet));
+    bestLabel.style.left = bestPct + "%";
+    if (bestPct < 25) { bestLabel.style.transform = "translateX(-12px)"; }
+    if (bestPct > 75) { bestLabel.style.transform = "translateX(calc(-100% + 12px))"; }
+    headTrack.appendChild(bestLabel);
+    head.append(headTrack, el("div", "t-better", "Higher"));
+    tornadoEl.appendChild(head);
+
+    const list = el("ol", "visually-hidden");
+
+    rows.forEach(function (r) {
+      // Whichever end gives the lower year-one net goes on the left.
+      const lowIsWorse = r.atLow.yearOne <= r.atHigh.yearOne;
+      const worse = lowIsWorse ? { value: r.low, result: r.atLow } : { value: r.high, result: r.atHigh };
+      const better = lowIsWorse ? { value: r.high, result: r.atHigh } : { value: r.low, result: r.atLow };
+
+      const row = el("div", "t-row");
+      row.setAttribute("aria-hidden", "true");
+      row.appendChild(el("div", "t-name", r.input.label));
+
+      const w = el("div", "t-worse", money(worse.result.yearOne));
+      w.appendChild(el("span", "t-at", "at " + guessText(r.input, worse.value)));
+      row.appendChild(w);
+
+      const t = track();
+      const worseLeft = pct(worse.result.yearOne);
+      const betterRight = pct(better.result.yearOne);
+      if (worseLeft < bestPct) {
+        const bar = el("div", "t-bar worse");
+        bar.style.left = worseLeft + "%";
+        bar.style.width = (Math.min(bestPct, betterRight) - worseLeft) + "%";
+        t.insertBefore(bar, t.firstChild);
+      }
+      if (betterRight > bestPct) {
+        const bar = el("div", "t-bar better");
+        const start = Math.max(bestPct, worseLeft);
+        bar.style.left = start + "%";
+        bar.style.width = (betterRight - start) + "%";
+        t.insertBefore(bar, t.firstChild);
+      }
+      row.appendChild(t);
+
+      const b = el("div", "t-better", money(better.result.yearOne));
+      b.appendChild(el("span", "t-at", "at " + guessText(r.input, better.value)));
+      row.appendChild(b);
+
+      tornadoEl.appendChild(row);
+
+      // The same facts as a plain list, for screen readers.
+      list.appendChild(el("li", "", r.input.label + ": year-one net from " + money(worse.result.yearOne) +
+        " at " + guessText(r.input, worse.value) + " to " + money(better.result.yearOne) +
+        " at " + guessText(r.input, better.value) + "."));
+    });
+
+    tornadoEl.appendChild(list);
+  }
+
   // ---------- Recalculate on every keystroke ----------
 
   function update() {
@@ -343,12 +454,16 @@
     if (read.blocking.length) {
       showFigures(null);
       drawChart(null);
+      drawTornado(null);
       return;
     }
 
     const result = Model.run(read.best, read.ramp);
     showFigures(result);
     drawChart(result, read.best.setup);
+
+    const rows = Model.rank(read.best, read.ranges, read.ramp);
+    drawTornado(rows, result.yearOne);
   }
 
   fillWithExample();

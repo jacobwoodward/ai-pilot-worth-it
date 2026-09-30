@@ -313,6 +313,95 @@ input[aria-invalid="true"] {
 
 .chart-caption strong { color: var(--ink); font-weight: 600; }
 
+/* ---------- Which number matters most (a "tornado" chart) ---------- */
+
+.tornado {
+  --worse: #E2A7A2;
+  --better: #86B8AD;
+  font-variant-numeric: tabular-nums;
+}
+
+.t-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 170px) 84px minmax(0, 1fr) 84px;
+  column-gap: 12px;
+  align-items: stretch;
+}
+
+.t-head {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  align-items: end;
+}
+
+.t-head .t-track { height: 34px; }
+.t-head .t-worse,
+.t-head .t-better { padding-bottom: 6px; }
+
+.t-name {
+  align-self: center;
+  padding: 10px 0;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.t-worse,
+.t-better {
+  align-self: center;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.t-worse { text-align: right; }
+.t-better { text-align: left; }
+.t-at { display: block; color: var(--muted); font-size: 0.8125rem; }
+
+.t-track { position: relative; min-height: 44px; }
+
+.t-bar {
+  position: absolute;
+  top: 50%;
+  height: 20px;
+  margin-top: -10px;
+}
+
+.t-bar.worse { background: var(--worse); border-radius: 4px 0 0 4px; }
+.t-bar.better { background: var(--better); border-radius: 0 4px 4px 0; }
+
+.t-best {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--navy);
+}
+
+.t-zero {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed #7D8894;
+}
+
+.t-best-label {
+  position: absolute;
+  bottom: 6px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: var(--navy);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8125rem;
+}
+
+.t-row + .t-row:not(.t-head) .t-name { border-top: 1px solid var(--line); }
+.t-head + .t-row .t-name { border-top: 0; }
+
 /* ---------- Footer ---------- */
 
 .foot {
@@ -357,4 +446,9 @@ input[aria-invalid="true"] {
   .figure-value.is-long { font-size: 1.25rem; }
   .card { padding: 16px; }
   .chart { min-height: 200px; }
+
+  .t-row { grid-template-columns: 72px minmax(0, 1fr) 72px; column-gap: 8px; }
+  .t-name { grid-column: 1 / -1; padding: 12px 0 2px; }
+  .t-head .t-name { display: none; }
+  .t-track { min-height: 40px; }
 }

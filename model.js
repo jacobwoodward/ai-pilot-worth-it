@@ -90,13 +90,69 @@
     return { running: running, payback: payback, yearOne: running[11] };
   }
 
+  /*
+    rank(best, ranges, rampMonths)
+
+    Answers "which guess matters most?"
+
+    For each guess that has a low and a high, it runs the business case
+    twice: once with that guess at its low and once at its high, leaving
+    every other guess at its best. The "swing" is how far apart the two
+    year-one nets land. The bigger the swing, the more the answer depends
+    on getting that guess right.
+
+      best    — the best guesses, e.g. { people: 40, hours: 3, ... }
+      ranges  — the low and high for each guess, e.g. { hours: { low: 1, high: 5 }, ... }
+                (a guess left out of ranges is left out of the ranking)
+
+    It hands back one row per guess, biggest swing first. Each row has:
+      input     — which guess (from INPUTS above)
+      low, high — the two values tried
+      atLow     — the result with the guess at its low  ({ payback, yearOne })
+      atHigh    — the result with the guess at its high
+      swing     — the gap between the two year-one nets, always positive
+  */
+  function rank(best, ranges, rampMonths) {
+    const rows = [];
+
+    INPUTS.forEach(function (input) {
+      const range = ranges[input.key];
+      if (!range) return;
+
+      const atLow = run(Object.assign({}, best, { [input.key]: range.low }), rampMonths);
+      const atHigh = run(Object.assign({}, best, { [input.key]: range.high }), rampMonths);
+
+      rows.push({
+        input: input,
+        low: range.low,
+        high: range.high,
+        atLow: { payback: atLow.payback, yearOne: atLow.yearOne },
+        atHigh: { payback: atHigh.payback, yearOne: atHigh.yearOne },
+        swing: Math.abs(atHigh.yearOne - atLow.yearOne)
+      });
+    });
+
+    // Biggest swing first. Ties keep the order of the table.
+    rows.sort(function (a, b) { return b.swing - a.swing; });
+    return rows;
+  }
+
+  // The low and high for every guess, as set out in INPUTS.
+  function exampleRanges() {
+    const ranges = {};
+    INPUTS.forEach(function (input) { ranges[input.key] = { low: input.low, high: input.high }; });
+    return ranges;
+  }
+
   const Model = {
     WEEKS_PER_MONTH: WEEKS_PER_MONTH,
     MONTHS: MONTHS,
     INPUTS: INPUTS,
     DEFAULT_RAMP_MONTHS: DEFAULT_RAMP_MONTHS,
     bestGuesses: bestGuesses,
-    run: run
+    exampleRanges: exampleRanges,
+    run: run,
+    rank: rank
   };
 
   // Works both in the browser (as window.Model) and in the test script.
