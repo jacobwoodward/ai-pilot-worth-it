@@ -457,13 +457,56 @@
     leastEl.hidden = !least;
   }
 
+  // ---------- Copy a plain-text summary ----------
+  // The same numbers as the page, as plain text to paste into an email or a Claude chat.
+
+  const copyButton = document.getElementById("copy-summary");
+  const copyDone = document.getElementById("copy-done");
+  let latest = null;
+
+  function summaryText() {
+    const lines = [
+      "Is this AI pilot worth it?",
+      "",
+      "Pays for itself in: " + paybackText(latest.result.payback),
+      "First year, net: " + money(latest.result.yearOne),
+      "",
+      "The guesses (low / best / high):"
+    ];
+    Model.INPUTS.forEach(function (input) {
+      const f = fields[input.key];
+      const show = function (side) {
+        const v = Number(f[side].value);
+        return f[side].value.trim() !== "" && isFinite(v) ? guessText(input, v) : "?";
+      };
+      lines.push("- " + input.label + ": " + show("low") + " / " + show("best") + " / " + show("high"));
+    });
+    lines.push("- Months to reach peak adoption: " + rampEl.value);
+    if (firstEl.textContent) lines.push("", firstEl.textContent);
+    if (leastEl.textContent) lines.push(leastEl.textContent);
+    lines.push("", "From " + location.href);
+    return lines.join("\n");
+  }
+
+  copyButton.addEventListener("click", function () {
+    if (!latest) return;
+    navigator.clipboard.writeText(summaryText()).then(function () {
+      copyDone.textContent = "Copied. Paste it into an email or a Claude chat.";
+    }, function () {
+      copyDone.textContent = "Your browser blocked copying. Select the numbers on the page instead.";
+    });
+  });
+
   // ---------- Recalculate on every keystroke ----------
 
   function update() {
     const read = readAll();
     showNotes(read.blocking, read.notes);
 
+    copyDone.textContent = "";
     if (read.blocking.length) {
+      latest = null;
+      copyButton.disabled = true;
       showFigures(null);
       drawChart(null);
       drawTornado(null);
@@ -472,6 +515,8 @@
     }
 
     const result = Model.run(read.best, read.ramp);
+    latest = { result: result };
+    copyButton.disabled = false;
     showFigures(result);
     drawChart(result, read.best.setup);
 
