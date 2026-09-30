@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Is This AI Pilot Worth It?</title>
+  <meta name="description" content="A business-case calculator for an AI pilot: payback month, first-year net, and which guess to check first. Runs entirely in your browser.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23004B8D'/%3E%3Cpath d='M7 22 L13 16 L18 19 L25 10' stroke='%23EAB234' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <h1>Is This AI Pilot Worth It?</h1>
+      <p class="lede">Seven guesses, one answer, and which guess to check first.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel inputs" aria-labelledby="inputs-title">
+        <h2 id="inputs-title">Your guesses</h2>
+        <p class="hint">Put your best guess in the middle. Low and high are how far off it could reasonably be.</p>
+
+        <table class="guesses">
+          <thead>
+            <tr>
+              <th scope="col" class="col-label"><span class="visually-hidden">Input</span></th>
+              <th scope="col">Low</th>
+              <th scope="col" class="col-best">Best</th>
+              <th scope="col">High</th>
+            </tr>
+          </thead>
+          <tbody id="guess-rows"></tbody>
+        </table>
+
+        <div class="ramp">
+          <label for="ramp">Months to reach peak adoption</label>
+          <input id="ramp" type="number" inputmode="decimal" min="0" step="any">
+        </div>
+
+        <div id="input-note" class="note" role="status" aria-live="polite" hidden></div>
+
+        <button type="button" id="reset" class="reset">Reset to the example numbers</button>
+      </section>
+
+      <section class="results" aria-labelledby="results-title">
+        <h2 id="results-title" class="visually-hidden">The answer</h2>
+
+        <div class="figures">
+          <div class="figure">
+            <span class="figure-label"><span class="swatch swatch-gold" aria-hidden="true"></span>Payback</span>
+            <span id="payback" class="figure-value">—</span>
+            <span class="figure-sub">First month the running total is back to zero or better</span>
+          </div>
+          <div class="figure">
+            <span class="figure-label">Year one</span>
+            <span id="year-one" class="figure-value">—</span>
+            <span class="figure-sub">Net after setup, licences and the value of time saved</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      Illustrative numbers · Built in Shop Class · Runs entirely in your browser; nothing is sent anywhere.
+    </footer>
+  </div>
+
+  <script src="model.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

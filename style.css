@@ -1,0 +1,311 @@
+/* Is This AI Pilot Worth It? — one stylesheet, no frameworks. */
+
+:root {
+  --navy: #004B8D;
+  --navy-soft: #E8EFF7;
+  --gold: #EAB234;
+  --green: #206A5D;
+  --green-soft: #D6E8E4;
+  --red: #B3261E;
+  --red-soft: #F4DCDA;
+  --ink: #17212B;
+  --muted: #5B6673;
+  --line: #DCE2E9;
+  --line-strong: #C3CDD8;
+  --paper: #FFFFFF;
+  --ground: #F5F7FA;
+  --radius: 10px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 48px 32px 40px;
+}
+
+/* ---------- Title ---------- */
+
+.top {
+  border-bottom: 2px solid var(--navy);
+  padding-bottom: 20px;
+  margin-bottom: 32px;
+}
+
+.top h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 2.25rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 1.125rem;
+}
+
+/* ---------- Two columns: guesses on the left, answer on the right ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 468px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.panel h2,
+.results h2 {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  color: var(--navy);
+}
+
+.hint {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* ---------- The guesses table ---------- */
+
+.guesses {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.guesses th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 4px 8px;
+}
+
+.guesses th.col-best { color: var(--navy); }
+
+.guesses tbody tr { border-top: 1px solid var(--line); }
+
+.guesses td {
+  padding: 8px 4px;
+  vertical-align: middle;
+}
+
+.guesses .row-label {
+  padding-left: 0;
+  padding-right: 12px;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.unit { color: var(--muted); white-space: nowrap; }
+
+.guesses input,
+.ramp input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.guesses td:not(.row-label) { width: 82px; }
+
+/* Hide the tiny up/down arrows: they crowd the numbers. */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.guesses input.best {
+  border-color: var(--navy);
+  font-weight: 600;
+}
+
+.guesses input:focus,
+.ramp input:focus {
+  outline: 2px solid var(--navy);
+  outline-offset: 1px;
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--red) !important;
+  background: #FDF6F5;
+}
+
+.ramp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.9375rem;
+}
+
+.ramp input { width: 76px; flex: none; font-weight: 600; border-color: var(--navy); }
+
+.note {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--line-strong);
+  background: var(--ground);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.note p { margin: 0; }
+.note p + p { margin-top: 4px; }
+.note .blocking { color: var(--red); }
+
+.reset {
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------- The answer ---------- */
+
+.results { min-width: 0; }
+
+.figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+
+.figure-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.swatch-gold { background: var(--gold); }
+
+.figure-value {
+  margin-top: 4px;
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+}
+
+.figure-value.is-long { font-size: 1.75rem; line-height: 1.25; padding: 6px 0; }
+.figure-value.is-positive { color: var(--green); }
+.figure-value.is-negative { color: var(--red); }
+.figure-value.is-empty { color: var(--line-strong); }
+
+.figure-sub {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* ---------- Footer ---------- */
+
+.foot {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ---------- Narrower screens ---------- */
+
+@media (max-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .inputs { max-width: 560px; }
+}
+
+@media (max-width: 560px) {
+  .page { padding: 28px 16px 32px; }
+  .top { margin-bottom: 24px; }
+  .top h1 { font-size: 1.75rem; }
+  .lede { font-size: 1rem; }
+  .panel { padding: 18px 16px; }
+
+  /* Each guess becomes a label on its own line with three boxes beneath. */
+  .guesses thead tr,
+  .guesses tbody tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 8px;
+  }
+  .guesses thead .col-label { display: none; }
+  .guesses tbody tr { padding: 10px 0 12px; }
+  .guesses td { padding: 0; width: auto !important; }
+  .guesses .row-label { grid-column: 1 / -1; padding: 0 0 6px; }
+
+  .figures { gap: 12px; }
+  .figure { padding: 16px; }
+  .figure-value { font-size: 2rem; }
+  .figure-value.is-long { font-size: 1.25rem; }
+}
